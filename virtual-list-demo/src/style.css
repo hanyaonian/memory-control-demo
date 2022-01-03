@@ -1,0 +1,31 @@
+html, body, #app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+	height: 100%;
+}
+.list-container {
+	height: 100%;
+  display: flex;
+	overflow: hidden;
+  justify-content: space-around;
+}
+
+.sticky-hint {
+	position: sticky;
+	top: 0;
+	background: wheat;
+}
+
+.scroll-list {
+	overflow-y: scroll;
+}
+
+ul {
+	margin: 0;
+}
+
+li {
+	height: 30px;
+}

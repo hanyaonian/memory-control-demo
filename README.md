@@ -22,7 +22,9 @@
 	3. 闭包 (事件处理回调等)
 
 ### 编码习惯
-  1. 定时清理listener、event等发布订阅/事件监听;
+  
+1. 定时清理listener、event等发布订阅/事件监听;
+
 	```ts
 	// 现代浏览器已经会在移除dom时将绑定该dom的事件一并移除，但如果在document上，那么需要重新考虑移除listener
 	// e.g.  In vue component created/mounted hook
@@ -31,7 +33,8 @@
 	someEleOrDocument.removeEventListener('click', someFunc);
 	```
 
-	2. 定时移除全局时间监听
+2. 定时移除全局时间监听
+
 	```ts
 	// Vue 2 中很常用的一个全局事件策略是 Vue.prototype.$EventBus = new Vue();
 	// 这么一来可以通过 $emit(evt: string, param: any), $on(evt: string, callback: Funcion) 进行一个全局的发布订阅
@@ -44,7 +47,8 @@
 	// this.$EventBus.$off('some_event_name');
 	```
 
-	3. 观察者使用需要及时移除
+3. 观察者使用需要及时移除
+
 	```ts
 	// Observer cases
 	function startObserve() {
@@ -60,10 +64,9 @@
 ### 当前项目中用到的一些节省内存的模式(性能/存储取舍)
 
 1. #### 数据缓存, 控制js数据量
-有些场景下，有些短时间内不会变化的数据会采用缓存的策略。可以节省一些时间上的开销（网络请求/读取本地数据库等）；
-但是如果缓存的数据变更频繁，也会成为比较占据内存的点；
 
-在一个频繁读取用户信息场景，我这里采取了一个简单的LRU的设计：
+	有些场景下，有些短时间内不会变化的数据会采用缓存的策略。可以节省一些时间上的开销（网络请求/读取本地数据库等）；但是如果缓存的数据变更频繁，也会成为比较占据内存的点；在一个频繁读取用户信息场景，我这里采取了一个简单的LRU的设计去缓存信息：
+	
 ```ts
 /**
  * @description simple lru cache sample

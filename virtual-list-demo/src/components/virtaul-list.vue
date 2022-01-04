@@ -7,7 +7,7 @@
 			<div class="list-phantom" :style="{ height: listHeight }"></div>
 			<!-- list content, visble list content -->
 			<ul class="list-content" ref="listcontent" :style="visibleArea">
-				<li v-for="item in newList" :key="item">{{ item }}</li>
+				<li v-for="item in visbleList" :key="item">{{ item }}</li>
 		    <div ref="bottom">bottom</div>
 			</ul>
 		</div>
@@ -60,7 +60,11 @@ export default {
 			return `${(total) * LI_HEIGHT}px`;
 		})
 
-		const newList = ref([]);
+		const tail = ref(0);
+		const start = ref(0);
+		const visbleList = computed(() => {
+			return list.value.slice(start.value, tail.value);
+		});
 		const visibleArea = reactive({
 			webkitTransform: ''
 		});
@@ -70,14 +74,13 @@ export default {
 
 			// visible area
 			const visibleCount = Math.round(offsetHeight/LI_HEIGHT);
-			const start = Math.floor(scrollTop / LI_HEIGHT);
+			start.value = Math.floor(scrollTop / LI_HEIGHT);
 			// plus 2 防止速度太快出现缺失	
-			const tail = visibleCount + start + 2;
-			newList.value = list.value.slice(start, tail);
-			if (tail >= list.value.length) {
+		  tail.value = visibleCount + start.value + 2;
+			if (tail.value >= list.value.length) {
 				loadMoreData();
 			}
-			visibleArea.webkitTransform = `translate3d(0, ${start * LI_HEIGHT}px, 0)`;
+			visibleArea.webkitTransform = `translate3d(0, ${start.value * LI_HEIGHT}px, 0)`;
 		};
 
 		return {
@@ -85,11 +88,10 @@ export default {
 			bottom,
 			listcontainer,
 			listcontent,
-			list,
+			visbleList,
 			listHeight,
 			computeListRange,
 			visibleArea,
-			newList,
 		}
 	}
 }

@@ -1,5 +1,5 @@
 <template>
-  <div ref="root" style="height: 100%; overflow: hidden;">
+  <div style="height: 100%; overflow: hidden;">
     <span class="sticky-hint"> current list dom count: {{ count }} </span>
 		<!-- virtual list container -->
 		<div class="list-container" ref="listcontainer" @scroll="computeListRange">
@@ -25,7 +25,6 @@ export default {
 	setup() {
 		const list = ref([]);
 		const count = ref(0);
-
 
 		/**
 		 * list data 

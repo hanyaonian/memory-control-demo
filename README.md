@@ -65,91 +65,109 @@
 
 1. #### 数据缓存, 控制js数据量
 
-	有些场景下，有些短时间内不会变化的数据会采用缓存的策略。可以节省一些时间上的开销（网络请求/读取本地数据库等）；但是如果缓存的数据变更频繁，也会成为比较占据内存的点；在一个频繁读取用户信息场景，我这里采取了一个简单的LRU的设计去缓存信息：
+   有些场景下，有些短时间内不会变化的数据会采用缓存的策略。可以节省一些时间上的开销（网络请求/读取本地数据库等）；但是如果缓存的数据变更频繁，也会成为比较占据内存的点；在一个频繁读取用户信息场景，我这里采取了一个简单的LRU的设计去缓存信息：
 	
-```ts
-/**
- * @description simple lru cache sample
- */
+    ```ts
+    /**
+     * @description simple lru cache sample
+    */
 
-export type CacheKey = String | Symbol | Number;
+    export type CacheKey = String | Symbol | Number;
 
-export interface CacheItem {
-  key: CacheKey;
-}
+    export interface CacheItem {
+      key: CacheKey;
+    }
 
-export default class LRUCache {
-  private cacheList: CacheItem[];
-  private cacheSize: number;
+    export default class LRUCache {
+      private cacheList: CacheItem[];
+      private cacheSize: number;
 
-  constructor(size: number) {
-    this.cacheList = [];
-    this.cacheSize = size;
-  }
+      constructor(size: number) {
+        this.cacheList = [];
+        this.cacheSize = size;
+      }
 
-  /**
-   * @description get cache. if cache exist, prioritize to head of list
-   * @param key CacheItem key
-   * @returns CacheItem | Null
-   */
-  public getCache(key: CacheKey): null | CacheItem {
-    let targetKey;
-    for (let i = 0; i < this.cacheList.length; i++) {
-      const cacheItem = this.cacheList[i];
-      if (cacheItem.key === key) {
-        targetKey = i;
-        break;
+     /**
+      * @description get cache. if cache exist, prioritize to head of list
+      * @param key CacheItem key
+      * @returns CacheItem | Null
+      */
+      public getCache(key: CacheKey): null | CacheItem {
+        let targetKey;
+        for (let i = 0; i < this.cacheList.length; i++) {
+          const cacheItem = this.cacheList[i];
+          if (cacheItem.key === key) {
+            targetKey = i;
+            break;
+          }
+        }
+        if (!targetKey) {
+          return null;
+        }
+        const [target] = this.cacheList.splice(targetKey, 1);
+        this.cacheList.push(target);
+        return target;
+      }
+
+      /**
+      * @description set cache to list.
+      * @param item { CacheItem }
+      * @returns void
+      */
+      public setCache(item: CacheItem): void {
+        const isCacheExist = this.getCache(item.key);
+        if (isCacheExist !== null) {
+          return;
+        }
+        if (this.cacheList.length >= this.cacheSize) {
+          this.cacheList.pop;
+        }
+        this.cacheList.unshift(item);
+      }
+
+      /**
+      * @description update cache list size.
+      * @param size { number }
+      */
+      public setCacheSize(size: number) {
+        if (size <= 0) {
+          throw RangeError('cache size should bigger than 0');
+        }
+        if (size >= this.cacheSize) {
+          this.cacheSize = size;
+        } else {
+          this.cacheList.length = size;
+        }
+      }
+
+      public destroy() {
+        this.cacheList = [];
+        this.cacheSize = 0;
       }
     }
-    if (!targetKey) {
-      return null;
-    }
-    const [target] = this.cacheList.splice(targetKey, 1);
-    this.cacheList.push(target);
-    return target;
-  }
+    ```
 
-  /**
-   * @description set cache to list.
-   * @param item { CacheItem }
-   * @returns void
-   */
-  public setCache(item: CacheItem): void {
-    const isCacheExist = this.getCache(item.key);
-    if (isCacheExist !== null) {
-      return;
-    }
-    if (this.cacheList.length >= this.cacheSize) {
-      this.cacheList.pop;
-    }
-    this.cacheList.unshift(item);
-  }
-
-  /**
-   * @description update cache list size.
-   * @param size { number }
-   */
-  public setCacheSize(size: number) {
-    if (size <= 0) {
-      throw RangeError('cache size should bigger than 0');
-    }
-    if (size >= this.cacheSize) {
-      this.cacheSize = size;
-    } else {
-      this.cacheList.length = size;
-    }
-  }
-
-  public destroy() {
-    this.cacheList = [];
-    this.cacheSize = 0;
-  }
-}
-```
-
-原本的方式是将所有的数值按照key	- value的方式，存储到了一个对象/map中。虽然这样的读取很快，但是在时间久了之后会存储几千上万条用户信息，占了比较大的空间。
-采用这种缓存队列，可以一定程度上限制缓存的数据量，缺点则是对接口的请求会更加频繁，读取上也会更慢(优先级越低的数据要遍历越久).
+  原本的方式是将所有的数值按照key	- value的方式，存储到了一个对象/map中。虽然这样的读取很快，但是在时间久了之后会存储几千上万条用户信息，占了比较大的空间。采用这种缓存队列，可以一定程度上限制缓存的数据量，缺点则是对接口的请求会更加频繁，读取上也会更慢(如果队列设置过长，那么优先级越低的数据要遍历越久).
 
 2. #### 虚拟列表，控制dom数目
 
-见 virtual-list-demo内代码。
+    一个简单的列表条目定高demo:
+
+    ```html
+    <div style="height: 100%; overflow: hidden;">
+      <span class="sticky-hint"> current list dom count: {{ count }} </span>
+      <!-- virtual list container -->
+      <div class="list-container" ref="listcontainer" @scroll="computeListRange">
+        <!-- list phantom, fill the size -->
+        <div class="list-phantom" :style="{ height: listHeight }"></div>
+        <!-- list content, visble list content -->
+        <ul class="list-content" ref="listcontent" :style="visibleArea">
+          <li v-for="item in visbleList" :key="item">{{ item }}</li>
+          <div ref="bottom">bottom</div>
+        </ul>
+      </div>
+    </div>
+    ```
+
+    ```js
+    ```
